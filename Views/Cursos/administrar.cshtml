@@ -1,18 +1,172 @@
 
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@model IEnumerable<EduCap.Models.Curso>
+
 @{
     ViewData["Title"] = "Administración";
+
+    // Datos temporales para visualizar el panel.
+    // Cuando el Backend envíe cursos reales,
+    // se mostrarán automáticamente.
+
+    var cursos = Model?.ToList()
+        ?? new List<EduCap.Models.Curso>
+        {
+            new EduCap.Models.Curso
+            {
+                Id = 1,
+                Nombre = "Computación básica",
+                Categoria = "Computación",
+                DuracionHoras = 20,
+                Modalidad = "Online",
+                Cupos = 25,
+                FechaInicio = new DateTime(2026, 11, 10)
+            },
+            new EduCap.Models.Curso
+            {
+                Id = 2,
+                Nombre = "Cocina tradicional",
+                Categoria = "Cocina",
+                DuracionHoras = 30,
+                Modalidad = "Presencial",
+                Cupos = 15,
+                FechaInicio = new DateTime(2026, 11, 20)
+            },
+            new EduCap.Models.Curso
+            {
+                Id = 3,
+                Nombre = "Guitarra para principiantes",
+                Categoria = "Música",
+                DuracionHoras = 20,
+                Modalidad = "Presencial",
+                Cupos = 12,
+                FechaInicio = new DateTime(2026, 12, 1)
+            }
+        };
 }
 
-<div class="container py-5">
-    <h1>Administración de Cursos</h1>
+<div class="py-4">
 
-    <p class="lead">
-        Panel de gestión de cursos
-        y capacitaciones.
+    <div class="d-flex flex-wrap justify-content-between
+                align-items-center gap-3 mb-4">
+
+        <div>
+            <h1 class="fw-bold mb-2">
+                Administración de Cursos
+            </h1>
+
+            <p class="text-muted mb-0">
+                Gestiona los cursos y capacitaciones de EduCap.
+            </p>
+        </div>
+
+        <a asp-controller="Cursos"
+           asp-action="Crear"
+           class="btn btn-primary px-4">
+            + Agregar curso
+        </a>
+
+    </div>
+
+    <div class="card border shadow-sm rounded-4">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">
+                Cursos registrados
+            </h5>
+
+            @if (!cursos.Any())
+            {
+                <div class="alert alert-light border text-center">
+                    No hay cursos registrados.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>Curso</th>
+                                <th>Categoría</th>
+                                <th>Duración</th>
+                                <th>Modalidad</th>
+                                <th>Cupos</th>
+                                <th>Inicio</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var curso in cursos)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        @curso.Nombre
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                            @curso.Categoria
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @curso.DuracionHoras h
+                                    </td>
+
+                                    <td>
+                                        @curso.Modalidad
+                                    </td>
+
+                                    <td>
+                                        @curso.Cupos
+                                    </td>
+
+                                    <td>
+                                        @curso.FechaInicio.ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex justify-content-center gap-2">
+
+                                            <a asp-controller="Cursos"
+                                               asp-action="Editar"
+                                               asp-route-id="@curso.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Editar
+                                            </a>
+
+                                            <a asp-controller="Cursos"
+                                               asp-action="Eliminar"
+                                               asp-route-id="@curso.Id"
+                                               class="btn btn-sm btn-outline-danger">
+                                                Eliminar
+                                            </a>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <p class="text-muted small mt-3">
+        Total de cursos: @cursos.Count
     </p>
 
-    <div class="alert alert-warning">
-        Próximamente podrás agregar,
-        editar y eliminar cursos.
-    </div>
 </div>
