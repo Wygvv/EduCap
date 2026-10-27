@@ -1,18 +1,401 @@
 
-@{
-    ViewData["Title"] = "Cursos";
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Text
+@model IEnumerable<EduCap.Models.Curso>
+
+@functions {
+    string Normalizar(string? texto)
+    {
+        var valor = (texto ?? "").ToLowerInvariant()
+            .Normalize(NormalizationForm.FormD);
+
+        return new string(valor
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c)
+                != UnicodeCategory.NonSpacingMark)
+            .ToArray());
+    }
+
+    string ObtenerSeccion(string? categoria)
+    {
+        var c = Normalizar(categoria);
+
+        if (new[] {
+            "comput", "inform", "program",
+            "tecnolog", "redes", "ofimat", "excel"
+        }.Any(c.Contains))
+            return "Tecnología e informática";
+
+        if (new[] {
+            "cocina", "coctel", "gastronom",
+            "reposter", "pasteler"
+        }.Any(c.Contains))
+            return "Gastronomía";
+
+        if (new[] {
+            "music", "guitarra", "arte",
+            "pintura", "danza"
+        }.Any(c.Contains))
+            return "Arte y música";
+
+        return "Otros cursos";
+    }
+
+    string ObtenerIcono(string? categoria)
+    {
+        var c = Normalizar(categoria);
+
+        if (c.Contains("coctel")) return "🍹";
+        if (c.Contains("cocina") || c.Contains("gastronom"))
+            return "🍳";
+        if (c.Contains("music") || c.Contains("guitarra"))
+            return "🎵";
+        if (c.Contains("arte") || c.Contains("pintura"))
+            return "🎨";
+        if (c.Contains("program")) return "💻";
+        if (c.Contains("comput") || c.Contains("inform"))
+            return "🖥️";
+
+        return "📚";
+    }
 }
 
-<div class="container py-5">
-    <h1>Nuestros Cursos</h1>
+@{
+    ViewData["Title"] = "Cursos";
 
-    <p class="lead">
-        Explora los cursos y capacitaciones
-        disponibles en EduCap.
-    </p>
+    // Datos temporales mientras se desarrolla el Backend.
+    // Si el controlador envía cursos, se utilizan esos datos.
+    var cursos = Model?.ToList()
+        ?? new List<EduCap.Models.Curso>
+        {
+            new EduCap.Models.Curso
+            {
+                Nombre = "Computación básica",
+                Categoria = "Computación",
+                Descripcion = "Aprende herramientas digitales esenciales.",
+                DuracionHoras = 20,
+                Modalidad = "Online",
+                Cupos = 25,
+                FechaInicio = new DateTime(2026, 11, 10)
+            },
+            new EduCap.Models.Curso
+            {
+                Nombre = "Introducción a la programación",
+                Categoria = "Programación",
+                Descripcion = "Conoce los fundamentos de programación.",
+                DuracionHoras = 40,
+                Modalidad = "Híbrido",
+                Cupos = 20,
+                FechaInicio = new DateTime(2026, 11, 15)
+            },
+            new EduCap.Models.Curso
+            {
+                Nombre = "Cocina tradicional",
+                Categoria = "Cocina",
+                Descripcion = "Aprende técnicas básicas de cocina.",
+                DuracionHoras = 30,
+                Modalidad = "Presencial",
+                Cupos = 15,
+                FechaInicio = new DateTime(2026, 11, 20)
+            },
+            new EduCap.Models.Curso
+            {
+                Nombre = "Coctelería básica",
+                Categoria = "Coctelería",
+                Descripcion = "Conoce técnicas de preparación de cócteles.",
+                DuracionHoras = 24,
+                Modalidad = "Presencial",
+                Cupos = 18,
+                FechaInicio = new DateTime(2026, 11, 25)
+            },
+            new EduCap.Models.Curso
+            {
+                Nombre = "Guitarra para principiantes",
+                Categoria = "Música",
+                Descripcion = "Aprende acordes y técnicas de guitarra.",
+                DuracionHoras = 20,
+                Modalidad = "Presencial",
+                Cupos = 12,
+                FechaInicio = new DateTime(2026, 12, 1)
+            }
+        };
 
-    <div class="alert alert-info">
-        Próximamente encontrarás aquí
-        nuestro catálogo de cursos.
+    var secciones = new[]
+    {
+        "Tecnología e informática",
+        "Gastronomía",
+        "Arte y música",
+        "Otros cursos"
+    };
+}
+
+<style>
+    .educap-filtros {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        background: #ffffff;
+    }
+
+    .educap-icono {
+        background: #f5f7fa;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        font-size: 40px;
+    }
+
+    .educap-curso {
+        transition: box-shadow 0.2s ease;
+    }
+
+    .educap-curso:hover {
+        box-shadow: 0 6px 18px rgba(0,0,0,0.10) !important;
+    }
+</style>
+
+<div class="container py-4">
+
+    <div class="mb-5">
+        <h1 class="fw-bold">Explora nuestros cursos</h1>
+        <p class="text-muted">
+            Encuentra una capacitación según tus intereses
+            y desarrolla nuevas habilidades.
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- CATÁLOGO: LADO IZQUIERDO -->
+        <div class="col-lg-8">
+
+            @if (!cursos.Any())
+            {
+                <div class="alert alert-light border">
+                    Actualmente no hay cursos disponibles.
+                </div>
+            }
+            else
+            {
+                foreach (var seccion in secciones)
+                {
+                    var cursosSeccion = cursos
+                        .Where(c => ObtenerSeccion(c.Categoria) == seccion)
+                        .OrderBy(c => c.Nombre)
+                        .ToList();
+
+                    if (cursosSeccion.Any())
+                    {
+                        <section class="mb-5 seccion-cursos">
+
+                            <h3 class="fw-bold mb-4">
+                                @seccion
+                            </h3>
+
+                            <div class="row g-4">
+
+                                @foreach (var curso in cursosSeccion)
+                                {
+                                    <div class="col-md-6 tarjeta-curso"
+                                         data-nombre="@Normalizar(curso.Nombre)"
+                                         data-categoria="@Normalizar(seccion)">
+
+                                        <div class="card h-100 border shadow-sm rounded-4 educap-curso">
+
+                                            <div class="card-body p-4">
+
+                                                <div class="educap-icono mb-3">
+                                                    @ObtenerIcono(curso.Categoria)
+                                                </div>
+
+                                                <span class="badge bg-primary mb-3">
+                                                    @curso.Categoria
+                                                </span>
+
+                                                <h5 class="fw-bold">
+                                                    @curso.Nombre
+                                                </h5>
+
+                                                <p class="text-muted small">
+                                                    @curso.Descripcion
+                                                </p>
+
+                                                <hr />
+
+                                                <p class="small mb-1">
+                                                    <strong>Duración:</strong>
+                                                    @curso.DuracionHoras horas
+                                                </p>
+
+                                                <p class="small mb-1">
+                                                    <strong>Modalidad:</strong>
+                                                    @curso.Modalidad
+                                                </p>
+
+                                                <p class="small mb-1">
+                                                    <strong>Cupos:</strong>
+                                                    @curso.Cupos
+                                                </p>
+
+                                                <p class="small mb-0">
+                                                    <strong>Inicio:</strong>
+                                                    @curso.FechaInicio.ToString("dd/MM/yyyy")
+                                                </p>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                        </section>
+                    }
+                }
+            }
+
+            <div id="sinResultados"
+                 class="alert alert-light border text-center d-none">
+                No se encontraron cursos con esos filtros.
+            </div>
+
+        </div>
+
+        <!-- BUSCADOR: LADO DERECHO -->
+        <div class="col-lg-4">
+
+            <aside class="educap-filtros">
+
+                <h5 class="fw-bold mb-4">
+                    Buscar cursos
+                </h5>
+
+                <div class="mb-4">
+                    <label for="buscarCurso"
+                           class="form-label fw-semibold">
+                        Nombre del curso
+                    </label>
+
+                    <input type="search"
+                           id="buscarCurso"
+                           class="form-control"
+                           placeholder="Ej: Computación..." />
+                </div>
+
+                <div class="mb-4">
+                    <label for="filtroCategoria"
+                           class="form-label fw-semibold">
+                        Categoría
+                    </label>
+
+                    <select id="filtroCategoria"
+                            class="form-select">
+
+                        <option value="todas">
+                            Todas las categorías
+                        </option>
+
+                        @foreach (var seccion in secciones)
+                        {
+                            if (cursos.Any(c =>
+                                ObtenerSeccion(c.Categoria) == seccion))
+                            {
+                                <option value="@Normalizar(seccion)">
+                                    @seccion
+                                </option>
+                            }
+                        }
+
+                    </select>
+                </div>
+
+                <p id="contadorCursos"
+                   class="text-muted small mb-3">
+                    @cursos.Count cursos disponibles
+                </p>
+
+                <button type="button"
+                        id="limpiarFiltros"
+                        class="btn btn-outline-primary w-100">
+                    Limpiar filtros
+                </button>
+
+            </aside>
+
+        </div>
+
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const buscar = document.getElementById("buscarCurso");
+        const categoria = document.getElementById("filtroCategoria");
+        const limpiar = document.getElementById("limpiarFiltros");
+        const tarjetas = document.querySelectorAll(".tarjeta-curso");
+        const secciones = document.querySelectorAll(".seccion-cursos");
+        const contador = document.getElementById("contadorCursos");
+        const sinResultados = document.getElementById("sinResultados");
+
+        function normalizar(texto) {
+            return texto.toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function filtrarCursos() {
+
+            const texto = normalizar(buscar.value.trim());
+            const filtro = categoria.value;
+
+            let visibles = 0;
+
+            tarjetas.forEach(function (tarjeta) {
+
+                const nombre = tarjeta.dataset.nombre;
+                const seccion = tarjeta.dataset.categoria;
+
+                const coincideNombre = nombre.includes(texto);
+                const coincideCategoria =
+                    filtro === "todas" || seccion === filtro;
+
+                const mostrar = coincideNombre && coincideCategoria;
+
+                tarjeta.classList.toggle("d-none", !mostrar);
+
+                if (mostrar) visibles++;
+            });
+
+            secciones.forEach(function (seccion) {
+                const tieneVisibles = Array.from(
+                    seccion.querySelectorAll(".tarjeta-curso")
+                ).some(t => !t.classList.contains("d-none"));
+
+                seccion.classList.toggle("d-none", !tieneVisibles);
+            });
+
+            contador.textContent =
+                visibles + (visibles === 1
+                    ? " curso encontrado"
+                    : " cursos encontrados");
+
+            sinResultados.classList.toggle(
+                "d-none",
+                visibles !== 0 || tarjetas.length === 0
+            );
+        }
+
+        buscar.addEventListener("input", filtrarCursos);
+        categoria.addEventListener("change", filtrarCursos);
+
+        limpiar.addEventListener("click", function () {
+            buscar.value = "";
+            categoria.value = "todas";
+            filtrarCursos();
+        });
+
+        filtrarCursos();
+    });
+</script>
